@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+    <meta charset="utf-8">
+    <title>Hey</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Righteous&display=swap" rel="stylesheet">
+
+    <link rel="icon" href="icon.png">
+    <link rel="stylesheet" href="main.css">
+
+    <style>
+        * {
+            margin: 0;
+        }
+
+        body {
+            background-color: black;
+        }
+
+        p {
+            color: white;
+            font-family: Righteous;
+            text-align: center;
+        }
+
+        #header,
+        #game,
+        #footer {
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+        }
+
+        #header {
+            height: 100px;
+            left: 0;
+            margin: 10px;
+            right: 0;
+            top: 0;
+        }
+
+        #header .row,
+        #footer .row {
+            flex-basis: 100%;
+        }
+
+        #header .cell,
+        #footer .cell {
+            background-color: #417;
+        }
+
+        .empty {
+            background-color: black !important;
+        }
+
+        #header p,
+        #footer p {
+            font-size: 35px;
+        }
+
+        #game {
+            bottom: 110px;
+            left: 0;
+            margin: 0 10px;
+            right: 0;
+            top: 110px;
+        }
+
+        #game .row {
+            flex-basis: 25%;
+        }
+
+        #game .cell {
+            background-color: #639;
+        }
+
+        #game .cell:hover {
+            background-color: #528;
+        }
+
+        #game p {
+            font-size: 75px;
+        }
+
+        #footer {
+            bottom: 0;
+            height: 100px;
+            left: 0;
+            margin: 10px;
+            right: 0;
+        }
+
+        .row {
+            display: flex;
+            width: 100%;
+        }
+
+        .cell {
+            align-items: center;
+            cursor: pointer;
+            display: flex;
+            border-radius: 5px;
+            flex-basis: 20%;
+            justify-content: center;
+            margin: 10px;
+        }
+
+        #question {
+            align-items: center;
+            background-color: #417;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            left: 0;
+            padding: 50px;
+            position: absolute;
+            right: 0;
+            top: 0;
+            visibility: hidden;
+        }
+
+        #text {
+            font-size: 150px;
+            margin-bottom: 50px;
+        }
+
+        #winner {
+            display: flex;
+        }
+
+        #winner p {
+            background-color: #639;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 50px;
+            margin: 10px;
+            padding: 20px;
+        }
+
+        #winner p:hover {
+            background-color: #528;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="header"></div>
+    <div id="game"></div>
+    <div id="footer"></div>
+    <div id="question">
+        <p id="text"></p>
+        <div id="winner"></div>
+    </div>
+
+    <script>
+        fetch('data.json').then(response => response.json()).then(json => generate(json));
+
+        let players = [];
+        let scores = [0, 0, 0];
+        let current = 0;
+
+        function setState(column, row, on) {
+            document.getElementById('game').children[row].children[column].style.backgroundColor = on ? '#639' : '#528';
+            document.getElementById('game').children[row].children[column].children[0].style.visibility = on ? 'visible' : 'hidden';
+        }
+
+        function addScore(player, amount) {
+            scores[player] += amount;
+            document.getElementById('footer').children[0].children[player + 1].children[0].innerHTML = players[player] + ': ' + scores[player];
+        }
+
+        function generate(json) {
+            for (let j = 0; j < 3; j++) {
+                let p = document.createElement('p');
+                p.innerHTML = json.players[j];
+                p.addEventListener('click', () => {
+                    addScore(j, current);
+                    document.getElementById('question').style.visibility = 'hidden';
+                });
+
+                document.getElementById('winner').appendChild(p);
+            }
+
+            let row = document.createElement('div');
+            row.classList.add('row');
+
+            for (let j = 0; j < 5; j++) {
+                let cell = document.createElement('div');
+                cell.classList.add('cell');
+
+                let p = document.createElement('p');
+                p.innerHTML = json.questions[j].title;
+
+                cell.appendChild(p);
+                row.appendChild(cell);
+            }
+
+            document.getElementById('header').appendChild(row);
+
+            for (let i = 0; i < 4; i++) {
+                row = document.createElement('div');
+                row.classList.add('row');
+
+                for (let j = 0; j < 5; j++) {
+                    let cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    cell.addEventListener('click', () => {
+                        document.getElementById('text').innerHTML = json.questions[j].questions[i];
+
+                        document.getElementById('question').style.visibility = 'visible';
+                        current = (i + 1) * 100;
+
+                        setState(j, i, false);
+                    });
+
+                    let p = document.createElement('p');
+                    p.innerHTML = (i + 1) * 100;
+
+                    cell.appendChild(p);
+                    row.appendChild(cell);
+                }
+
+                document.getElementById('game').appendChild(row);
+            }
+
+            row = document.createElement('div');
+            row.classList.add('row');
+
+            for (let j = 0; j < 5; j++) {
+                let cell = document.createElement('div');
+                cell.classList.add('cell');
+
+                if (j === 0 || j === 4) {
+                    cell.classList.add('empty');
+                } else {
+                    let p = document.createElement('p');
+                    players.push(json.players[j - 1]);
+                    cell.appendChild(p);
+                }
+
+                row.appendChild(cell);
+            }
+
+            document.getElementById('footer').appendChild(row);
+
+            addScore(0, 0);
+            addScore(1, 0);
+            addScore(2, 0);
+        }
+    </script>
+    <script type="module" src="main.js"></script>
+</body>
+
+</html>
